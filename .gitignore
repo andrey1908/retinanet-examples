@@ -10,7 +10,12 @@ build
 dist
 .vscode
 *.jpg
+*.png
 !tests/*.jpg
 *.pkl
 *.torch
 *.plan
+models
+temp
+data
+

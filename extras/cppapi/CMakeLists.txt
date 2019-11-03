@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 
 project(retinanet_infer LANGUAGES CXX)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 find_package(CUDA REQUIRED)
 enable_language(CUDA)
@@ -34,3 +35,9 @@ find_package(OpenCV REQUIRED)
 
 add_executable(infer infer.cpp)
 target_link_libraries(infer PRIVATE retinanet ${OpenCV_LIBS} cuda ${CUDA_LIBRARIES})
+
+add_executable(detect detect.cpp)
+target_link_libraries(detect PRIVATE retinanet ${OpenCV_LIBS} cuda ${CUDA_LIBRARIES})
+
+add_executable(predict predict.cpp)
+target_link_libraries(predict PRIVATE retinanet ${OpenCV_LIBS} cuda ${CUDA_LIBRARIES})
