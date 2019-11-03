@@ -23,20 +23,21 @@ from correct_detections import correct_detections
 
 def build_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-eng', '--engine_file', required=True, type=str)
-    parser.add_argument('-ann', '--annotations_file', required=True, type=str)  # ../data/annotations.json
+    parser.add_argument('-eng', '--engine-file', required=True, type=str)  # ../models/640x384.plan
+    parser.add_argument('-ann', '--annotations-file', required=True, type=str)  # ../data/annotations.json
+    parser.add_argument('-img-fld', '--images-folder', required=True, type=str)  # ./
     parser.add_argument('-area', '--area', nargs=2, type=int, default=[40**2, 1e5**2])
     return parser
 
 
-def get_images_from_coco(annotations_file):
+def get_images_from_coco(annotations_file, images_folder):
     with open(annotations_file, 'r') as f:
         json_dict = json.load(f)
     images = json_dict['images']
     image_names = list()
     image_ids = list()
     for image in images:
-        image_names.append(image['file_name'])
+        image_names.append(os.path.join(images_folder, image['file_name']))
         image_ids.append(image['id'])
     return image_names, image_ids
 
@@ -120,10 +121,10 @@ def convert_detections_to_cvat(det_txt_file, det_cvat_file, classes):
         f.writelines(reparsed.toprettyxml(indent="  "))
 
 
-def validate(engine_file, annotations_file, area=(40**2, 1e5**2)):
+def validate(engine_file, annotations_file, images_folder, area=(40**2, 1e5**2)):
     if not os.path.exists('../temp'):
         os.mkdir('../temp')
-    image_names, image_ids = get_images_from_coco(annotations_file)
+    image_names, image_ids = get_images_from_coco(annotations_file, images_folder)
     save_image_names_and_ids(image_names, image_ids, '../temp/images_and_ids.txt')
     os.system('../extras/cppapi/build/predict ../temp/images_and_ids.txt ' + engine_file + ' ../temp/det.txt')
     convert_detections_to_cvat('../temp/det.txt', '../temp/det.xml', get_classes('kitti_person'))
