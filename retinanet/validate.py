@@ -9,15 +9,23 @@ from metrics_eval import print_metrics
 from correct_detections import correct_detections
 
 
+# def build_parser():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('-eng', '--engine_file', required=True, type=str)
+#     parser.add_argument('-out', '--out_file', required=True, type=str)
+#     parser.add_argument('-to', '--predict_to', type=str, choices=['cvat', 'coco'], default='cvat')
+#     parser.add_argument('-det_only', '--detections_only', action='store_true')
+#     parser.add_argument('-img_fld', '--images_folder', required=True, type=str)
+#     parser.add_argument('-img_cl', '--images_and_classes_file', type=str)
+#     parser.add_argument('-thr', '--threshold', type=float, default=0.)
+#     return parser
+
+
 def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-eng', '--engine_file', required=True, type=str)
-    parser.add_argument('-out', '--out_file', required=True, type=str)
-    parser.add_argument('-to', '--predict_to', type=str, choices=['cvat', 'coco'], default='cvat')
-    parser.add_argument('-det_only', '--detections_only', action='store_true')
-    parser.add_argument('-img_fld', '--images_folder', required=True, type=str)
-    parser.add_argument('-img_cl', '--images_and_classes_file', type=str)
-    parser.add_argument('-thr', '--threshold', type=float, default=0.)
+    parser.add_argument('-ann', '--annotations_file', required=True, type=str)  # ../data/annotations.json
+    parser.add_argument('-area', '--area', nargs=2, type=int, default=[40**2, 1e5**2])
     return parser
 
 
@@ -112,12 +120,19 @@ def convert_detections_to_cvat(det_txt_file, det_cvat_file, classes):
         f.writelines(reparsed.toprettyxml(indent="  "))
 
 
-image_names, image_ids = get_images_from_coco("../data/annotations.json")
-save_image_names_and_ids(image_names, image_ids, "../temp/images_and_ids.txt")
-os.system("../extras/cppapi/build/predict ../temp/images_and_ids.txt ../models/640x384.plan ../temp/det.txt")
-convert_detections_to_cvat("../temp/det.txt", "../temp/det.xml", get_classes('kitti_person'))
-cvat2coco("../temp/det.xml", "../temp/det.json", detections_only=True)
-correct_detections("../temp/det.json", "../temp/detections.json")
-# os.system("mv ../temp/det.json ../temp/detections.json")
-print_metrics("../data/annotations.json", "../temp/detections.json", area=(40**2, -1))
+def validate(engine_file, annotations_file, area=(40**2, 1e5**2)):
+    if not os.path.exists('../temp'):
+        os.mkdir('../temp')
+    image_names, image_ids = get_images_from_coco(annotations_file)
+    save_image_names_and_ids(image_names, image_ids, '../temp/images_and_ids.txt')
+    os.system('../extras/cppapi/build/predict ../temp/images_and_ids.txt ' + engine_file + ' ../temp/det.txt')
+    convert_detections_to_cvat('../temp/det.txt', '../temp/det.xml', get_classes('kitti_person'))
+    cvat2coco('../temp/det.xml', '../temp/det.json', detections_only=True)
+    correct_detections('../temp/det.json', '../temp/detections.json')
+    # os.system("mv ../temp/det.json ../temp/detections.json")
+    print_metrics('../data/annotations.json', '../temp/detections.json', area)
 
+if __name__ == '__main__':
+    parser = build_parser()
+    args = parser.parse_args()
+    validate(**vars(args))
