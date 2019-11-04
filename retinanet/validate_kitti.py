@@ -23,9 +23,9 @@ from correct_detections import correct_detections
 
 def build_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-eng', '--engine-file', required=True, type=str)  # ../models/640x384.plan
-    parser.add_argument('-ann', '--annotations-file', required=True, type=str)  # ../data/annotations.json
-    parser.add_argument('-img-fld', '--images-folder', required=True, type=str)  # ./
+    parser.add_argument('-eng', '--engine-file', required=True, type=str)  # ../models/640x192.plan
+    parser.add_argument('-ann', '--annotations-file', required=True, type=str)  # ../data/kitti/val_person.json
+    parser.add_argument('-img-fld', '--images-folder', required=True, type=str)  # ./kitti/images
     parser.add_argument('-area', '--area', nargs=2, type=int, default=[40**2, 1e5**2])
     return parser
 
@@ -129,8 +129,7 @@ def validate(engine_file, annotations_file, images_folder, area=(40**2, 1e5**2))
     os.system('../extras/cppapi/build/predict ../temp/images_and_ids.txt ' + engine_file + ' ../temp/det.txt')
     convert_detections_to_cvat('../temp/det.txt', '../temp/det.xml', get_classes('kitti_person'))
     cvat2coco('../temp/det.xml', '../temp/det.json', detections_only=True)
-    correct_detections('../temp/det.json', '../temp/detections.json')
-    # os.system("mv ../temp/det.json ../temp/detections.json")
+    os.system("mv ../temp/det.json ../temp/detections.json")
     print_metrics(annotations_file, '../temp/detections.json', area)
 
 if __name__ == '__main__':
